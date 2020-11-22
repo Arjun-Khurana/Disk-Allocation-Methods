@@ -17,6 +17,10 @@ public class FileSystem {
         }
     }
 
+    public void printFileTable() {
+        printBlock(0);
+    }
+
     public void printBitmap() {
         printBlock(1);
     }
