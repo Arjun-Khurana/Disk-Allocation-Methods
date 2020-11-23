@@ -17,9 +17,36 @@ public class ContiguousSystem extends FileSystem {
         ObjectInputStream is = new ObjectInputStream(in);
         FileTable ft = (FileTable)is.readObject();
 
+        int start = 0, 
+        int length = 0;
+        boolean found = false;
+
         for (FileEntry e : ft.table) {
             if (String.valueOf(e.name).equals(name)) {
-                System.out.println(e.name);
+                found = true;
+                start = e.start;
+                length = e.length;
+            }
+        }
+
+        if (!found) {
+            System.out.println("File not found.");
+            return;
+        }
+
+        byte[] toDisplay = new byte[512];
+
+        if (length > 1) {
+            for (int i = 0; i < length; i++) {
+                toDisplay = this.memory.read(start + i);
+                for (int j = 0; j < toDisplay.length; j++) {
+                    System.out.print(toDisplay[j]);
+                }
+            }
+        } else {
+            toDisplay = this.memory.read(start);
+            for (int j = 0; j < toDisplay.length; j++) {
+                System.out.print(toDisplay[j]);
             }
         }
         // System.out.println(ft.table[0].name);
