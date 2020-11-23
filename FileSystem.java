@@ -1,6 +1,7 @@
 public class FileSystem {
 
-    private DiskDrive memory;
+    protected DiskDrive memory;
+    private FileTable filetable;
 
     public FileSystem(DiskDrive d) {
         this.memory = d;

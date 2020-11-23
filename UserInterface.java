@@ -1,7 +1,9 @@
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Scanner;
 
 public class UserInterface {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         DiskDrive drive = new DiskDrive();
         ContiguousSystem filesystem = new ContiguousSystem(drive);
         byte[] data = new byte[512];
@@ -33,21 +35,35 @@ public class UserInterface {
 
             switch (input) {
                 case 1:
+                    System.out.print("Display which file? ");
+                    String choice = in.nextLine();
+                    filesystem.displayFile(choice);
                     break;
 
                 case 2:
+                    filesystem.printFileTable();
                     break;
 
                 case 3:
+                    filesystem.printBitmap();
                     break;
 
                 case 4:
+                    System.out.print("Display which block? ");
+                    int block = in.nextInt();
+                    filesystem.printBlock(block);
                     break;
 
                 case 5:
                     break;
                 
                 case 6:
+                    System.out.print("Copy from: ");
+                    String inputString = in.nextLine();
+                    System.out.print("Copy to: ");
+                    String filename = in.nextLine();
+                    Path path = Paths.get(inputString);
+                    filesystem.storeFile(path, filename);
                     break;
 
                 case 7:
