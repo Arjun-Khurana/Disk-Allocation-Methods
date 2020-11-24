@@ -40,7 +40,6 @@ public class ChainedSystem extends FileSystem {
 
             byte[][] dataToPlace = new byte[numBlocks][512];
             byte[] whereToPlace = new byte[numBlocks+1];
-            System.out.println(Arrays.toString(whereToPlace));
             byte[] bitmap = this.memory.read(1);
 
             for (int i = 0; i < numBlocks; i++) {
@@ -53,6 +52,13 @@ public class ChainedSystem extends FileSystem {
                     }
                 }
             }
+
+            for (int i = 0; i < numBlocks; i++) {
+                if (whereToPlace[i] == 0) {
+                    System.out.println("No space found on disk.");
+                    return 1;
+                }
+            }
             
             whereToPlace[numBlocks] = 0;
 
@@ -62,43 +68,17 @@ public class ChainedSystem extends FileSystem {
                 this.memory.write(whereToPlace[i], dataToPlace[i]);
             }
 
-            // int where = 0;
-
-            // for (int i = 0; i < bitmap.length; i++) {
-            //     boolean foundSpace = true;
-            //     if (bitmap[i] == 0) {
-            //         for (int j = i; j < i + numBlocks; j++) {
-            //             if (bitmap[j] == 1) {
-            //                 foundSpace = false;
-            //                 break;
-            //             }
-            //         }
-            //         if (foundSpace) {
-            //             where = i;
-            //             break;
-            //         }
-            //     }
-            // }
-
-            // if (where == 0) {
-            //     System.out.println("No space found on disk.");
-            //     return 1;
-            // }
-
-            // for (int i = where, j = 0; i < where + numBlocks; i++, j++) {
-            //     this.memory.write(i, blockData[j]);
-            // }
-
-            // if (this.addToFileTable(filename, (byte)where, (byte)numBlocks) != 0) {
-            //     return 1;
-            // }
+            if (this.addToFileTable(filename, whereToPlace[0], (byte)0) != 0) {
+                return 1;
+            }
 
         } else {
             int where = 0;
             byte[] bitmap = this.memory.read(1);
             for (int i = 0; i < bitmap.length; i++) {
                 if (bitmap[i] == 0) {
-                    this.memory.write(i, data);
+                    byte[] location = {0};
+                    this.memory.write(i, combineArrays(location, data));
                     where = i;
                     break;
                 }
@@ -109,30 +89,161 @@ public class ChainedSystem extends FileSystem {
                 return 1;
             }
 
-            // if (this.addToFileTable(filename, (byte)where, (byte)1) != 0) {
-            //     return 1;
-            // }
+            if (this.addToFileTable(filename, (byte)where, (byte)0) != 0) {
+                return 1;
+            }
         }
         return 0;
     }
 
     public void displayFile(String name) throws Exception {
+        byte[] data = this.memory.read(0);
+        ByteArrayInputStream in = new ByteArrayInputStream(data);
+        ObjectInputStream is = new ObjectInputStream(in);
+        FileTable ft = (FileTable)is.readObject();
 
+        int start = 0;
+        boolean found = false;
+
+        for (int i = 0; i < ft.table.length; i++) {
+            if (ft.table[i] == null) {
+                break;
+            }
+            FileEntry e = ft.table[i];
+            if (String.valueOf(e.name).equals(name)) {
+                found = true;
+                start = e.start;
+                break;
+            }
+        } 
+
+        if (!found) {
+            System.out.println("File not found.");
+            return;
+        }
+
+        byte[] toDisplay = this.memory.read(start);
+
+        while (true) {
+            for (int i = 1; i < toDisplay.length; i++) {
+                System.out.print(toDisplay[i]);
+            }
+            if (toDisplay[0] == 0) {
+                break;
+            }
+            toDisplay = this.memory.read(toDisplay[0]);
+        }
     }
 
     public void printFileTable() throws Exception {
-
-    }
-
-    private int addToFileTable(String filename, byte where, byte length) throws Exception {
-        return 0;
+        byte[] ftBytes = this.memory.read(0);
+        ByteArrayInputStream in = new ByteArrayInputStream(ftBytes);
+        ObjectInputStream is = new ObjectInputStream(in);
+        FileTable ft = (FileTable)is.readObject();
+        for (int i = 0; i < ft.table.length; i++) {
+            if (ft.table[i] == null) {
+                break;
+            }
+            System.out.println(
+                String.valueOf(ft.table[i].name) + "\t" + 
+                (int)ft.table[i].start
+            );
+        }
     }
 
     public int simToDisk(Path path, String filename) throws Exception {
+        byte[] ftBytes = this.memory.read(0);
+        ByteArrayInputStream in = new ByteArrayInputStream(ftBytes);
+        ObjectInputStream is = new ObjectInputStream(in);
+        FileTable ft = (FileTable)is.readObject();
+
+        int start = 0;
+        boolean found = false;
+
+        for (int i = 0; i < ft.table.length; i++) {
+            if (ft.table[i] == null) {
+                break;
+            }
+            FileEntry e = ft.table[i];
+            if (String.valueOf(e.name).equals(filename)) {
+                found = true;
+                start = e.start;
+                break;
+            }
+        } 
+
+        if (!found) {
+            System.out.println("File not found.");
+            return 1;
+        }
+
+        File outputFile = path.toFile();
+        OutputStream fileOut = new FileOutputStream(outputFile);
+
+        byte[] data = this.memory.read(start);
+
+        while (true) {
+            byte[] toOut = new byte[data.length - 1];
+            System.arraycopy(data, 1, toOut, 0, data.length-1);
+            fileOut.write(toOut);
+            if (data[0] == 0) {
+                break;
+            }
+            data = this.memory.read(data[0]);
+        }
+
+        fileOut.close();
         return 0;
     }
 
     public int deleteFile(String filename) throws Exception {
+        byte[] ftBytes = this.memory.read(0);
+        ByteArrayInputStream in = new ByteArrayInputStream(ftBytes);
+        ObjectInputStream is = new ObjectInputStream(in);
+        FileTable ft = (FileTable)is.readObject();
+
+        int start = 0;
+        boolean found = false;
+
+        for (int i = 0; i < ft.table.length; i++) {
+            if (ft.table[i] == null) {
+                break;
+            }
+            FileEntry e = ft.table[i];
+            if (String.valueOf(e.name).equals(filename)) {
+                found = true;
+                start = e.start;
+                ft.table[i] = null;
+                break;
+            }
+        } 
+
+        if (!found) {
+            System.out.println("File not found.");
+            return 1;
+        }
+
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        ObjectOutputStream oos = new ObjectOutputStream(bos);
+        oos.writeObject(ft);
+        oos.flush();
+        ftBytes = bos.toByteArray();
+        this.memory.write(0, ftBytes);
+
+        byte[] bitmap = this.memory.read(1);
+        byte[] data = this.memory.read(start);
+        bitmap[start] = 0;
+
+        while (true) {
+            if (data[0] == 0) {
+                break;
+            }
+            bitmap[data[0]] = 0;
+            data = this.memory.read(data[0]);
+        }
+
+        this.memory.write(1, bitmap);
+
         return 0;
     }
 }

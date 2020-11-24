@@ -6,7 +6,6 @@ public class DiskDrive {
         memory = new byte[256][512]; 
         memory[1][0] = 1;
         memory[1][1] = 1;
-        memory[1][3] = 1;
     }
 
     public byte[] read(int index) {
