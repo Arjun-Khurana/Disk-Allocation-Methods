@@ -5,7 +5,7 @@ import java.util.Scanner;
 public class UserInterface {
     public static void main(String[] args) throws Exception {
         DiskDrive drive = new DiskDrive();
-        ContiguousSystem filesystem = new ContiguousSystem(drive);
+        ChainedSystem filesystem = new ChainedSystem(drive);
         byte[] data = new byte[512];
 
         Scanner in = new Scanner(System.in);

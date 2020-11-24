@@ -60,7 +60,7 @@ public class ContiguousSystem extends FileSystem {
         }
     }
 
-    public void printFileTable() throws Exception{
+    public void printFileTable() throws Exception {
         byte[] ftBytes = this.memory.read(0);
         ByteArrayInputStream in = new ByteArrayInputStream(ftBytes);
         ObjectInputStream is = new ObjectInputStream(in);
@@ -77,7 +77,7 @@ public class ContiguousSystem extends FileSystem {
         }
     }
 
-    private int addToFileTable(String filename, byte where, byte length) throws Exception{
+    private int addToFileTable(String filename, byte where, byte length) throws Exception {
         byte[] ftBytes = this.memory.read(0);
         ByteArrayInputStream in = new ByteArrayInputStream(ftBytes);
         ObjectInputStream is = new ObjectInputStream(in);

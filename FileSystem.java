@@ -22,9 +22,14 @@ public class FileSystem {
         byte[] data = this.memory.read(block);
 
         for (int i = 0; i < 512; i++) {
-            System.out.print(data[i]);
-            if ((i+1) % 32 == 0) {
-                System.out.println();
+            try {
+                System.out.print(data[i]);
+                if ((i+1) % 32 == 0) {
+                    System.out.println();
+                }
+            } catch (Exception E) {
+                E.printStackTrace();
+                break;
             }
         }
     }
