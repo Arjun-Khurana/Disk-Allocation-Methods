@@ -6,7 +6,6 @@ public class UserInterface {
     public static void main(String[] args) throws Exception {
         DiskDrive drive = new DiskDrive();
         ChainedSystem filesystem = new ChainedSystem(drive);
-        byte[] data = new byte[512];
 
         Scanner in = new Scanner(System.in);
         
@@ -27,7 +26,6 @@ public class UserInterface {
             } catch (Exception e) {
                 System.out.println("Invalid choice");
                 in.nextLine();
-                // e.printStackTrace();
                 continue;
             }
 
@@ -36,7 +34,6 @@ public class UserInterface {
             String inputString = "";
             String filename = "";
             Path path = null;
-            int result;
 
             switch (input) {
                 case 1:
@@ -48,16 +45,19 @@ public class UserInterface {
 
                 case 2:
                     filesystem.printFileTable();
+                    System.out.println("");
                     break;
 
                 case 3:
                     filesystem.printBitmap();
+                    System.out.println("");
                     break;
 
                 case 4:
                     System.out.print("Display which block? ");
                     int block = in.nextInt();
                     filesystem.printBlock(block);
+                    System.out.println("");
                     break;
 
                 case 5:
@@ -95,10 +95,12 @@ public class UserInterface {
 
                 case 8:
                     in.close();
+                    System.out.println("Exiting.");
                     return;
 
                 default:
                     System.out.println("Invalid choice");
+                    System.out.println("");
                     break;
             }
         }

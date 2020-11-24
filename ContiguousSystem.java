@@ -67,7 +67,7 @@ public class ContiguousSystem extends FileSystem {
         FileTable ft = (FileTable)is.readObject();
         for (int i = 0; i < ft.table.length; i++) {
             if (ft.table[i] == null) {
-                break;
+                continue;
             }
             System.out.println(
                 String.valueOf(ft.table[i].name) + "\t" + 
@@ -204,10 +204,11 @@ public class ContiguousSystem extends FileSystem {
 
         for (int i = 0; i < ft.table.length; i++) {
             if (ft.table[i] == null) {
-                break;
+                continue;
             }
             FileEntry e = ft.table[i];
             if (String.valueOf(e.name).equals(filename)) {
+                System.out.println(e.name);
                 found = true;
                 start = e.start;
                 length = e.length;
