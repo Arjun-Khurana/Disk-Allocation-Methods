@@ -1,10 +1,21 @@
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+
 public class FileSystem {
 
     protected DiskDrive memory;
-    private FileTable filetable;
 
-    public FileSystem(DiskDrive d) {
+    public FileSystem(DiskDrive d) throws Exception {
         this.memory = d;
+        FileTable ft = new FileTable();
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        ObjectOutputStream oos = new ObjectOutputStream(bos);
+        oos.writeObject(ft);
+        oos.flush();
+        byte[] data = bos.toByteArray();
+        this.memory.write(0, data);
     }
 
     public void printBlock(int block) {
@@ -16,10 +27,6 @@ public class FileSystem {
                 System.out.println();
             }
         }
-    }
-
-    public void printFileTable() {
-        printBlock(0);
     }
 
     public void printBitmap() {

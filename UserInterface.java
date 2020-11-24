@@ -59,9 +59,9 @@ public class UserInterface {
                 
                 case 6:
                     System.out.print("Copy from: ");
-                    String inputString = in.nextLine();
+                    String inputString = in.next();
                     System.out.print("Copy to: ");
-                    String filename = in.nextLine();
+                    String filename = in.next();
                     Path path = Paths.get(inputString);
                     filesystem.storeFile(path, filename);
                     break;
