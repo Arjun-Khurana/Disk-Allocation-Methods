@@ -6,7 +6,6 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.io.ObjectInputStream;
 
 public class IndexedSystem extends FileSystem {
@@ -17,7 +16,14 @@ public class IndexedSystem extends FileSystem {
 
     @Override
     public int diskToSim(Path path, String filename) throws Exception {
-        byte[] data = Files.readAllBytes(path);
+        byte[] data;
+        try {
+            data = Files.readAllBytes(path);
+        } catch (Exception E) {
+            System.out.println("File not found.");
+            return 1;
+        }
+        
         byte[] bitmap = this.memory.read(1);
         int indexBlock = 0;
 
@@ -71,6 +77,42 @@ public class IndexedSystem extends FileSystem {
 
     @Override
     public int simToDisk(Path path, String filename) throws Exception {
+        byte[] ftBytes = this.memory.read(0);
+        ByteArrayInputStream in = new ByteArrayInputStream(ftBytes);
+        ObjectInputStream is = new ObjectInputStream(in);
+        FileTable ft = (FileTable)is.readObject();
+
+        int start = 0;
+        boolean found = false;
+
+        for (int i = 0; i < ft.table.length; i++) {
+            if (ft.table[i] == null) {
+                continue;
+            }
+            FileEntry e = ft.table[i];
+            if (String.valueOf(e.name).equals(filename)) {
+                found = true;
+                start = e.start;
+                break;
+            }
+        } 
+
+        if (!found) {
+            System.out.println("File not found.");
+            return 1;
+        }
+
+        File outputFile = path.toFile();
+        OutputStream fileOut = new FileOutputStream(outputFile);
+
+        byte[] indices = this.memory.read(start);
+
+        for (byte b : indices) {
+            fileOut.write(this.memory.read((int)b));
+        }
+
+        fileOut.close();
+
         return 0;
     }
 
@@ -131,6 +173,49 @@ public class IndexedSystem extends FileSystem {
 
     @Override
     public int deleteFile(String filename) throws Exception {
+        byte[] ftBytes = this.memory.read(0);
+        ByteArrayInputStream in = new ByteArrayInputStream(ftBytes);
+        ObjectInputStream is = new ObjectInputStream(in);
+        FileTable ft = (FileTable)is.readObject();
+
+        int start = 0;
+        boolean found = false;
+
+        for (int i = 0; i < ft.table.length; i++) {
+            if (ft.table[i] == null) {
+                continue;
+            }
+            FileEntry e = ft.table[i];
+            if (String.valueOf(e.name).equals(filename)) {
+                found = true;
+                start = e.start;
+                ft.table[i] = null;
+                break;
+            }
+        } 
+
+        if (!found) {
+            System.out.println("File not found.");
+            return 1;
+        }
+
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        ObjectOutputStream oos = new ObjectOutputStream(bos);
+        oos.writeObject(ft);
+        oos.flush();
+        ftBytes = bos.toByteArray();
+        this.memory.write(0, ftBytes);
+
+        byte[] bitmap = this.memory.read(1);
+        byte[] indices = this.memory.read(start);
+        bitmap[start] = 0;
+
+        for (byte b : indices) {
+            bitmap[(int)b] = 0;
+        }
+
+        this.memory.write(1, bitmap);
+
         return 0;
     }
 }

@@ -6,7 +6,6 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.io.ObjectInputStream;
 
 public class ContiguousSystem extends FileSystem {
@@ -81,7 +80,14 @@ public class ContiguousSystem extends FileSystem {
 
     @Override
     public int diskToSim(Path path, String filename) throws Exception {
-        byte[] data = Files.readAllBytes(path);
+        byte[] data;
+        try {
+            data = Files.readAllBytes(path);
+        } catch (Exception E) {
+            System.out.println("File not found.");
+            return 1;
+        }
+
         if (data.length > 512) {
             byte[][] blockData = subdivideData(512, data);
             int numBlocks = blockData.length;
