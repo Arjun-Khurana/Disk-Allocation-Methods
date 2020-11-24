@@ -1,6 +1,9 @@
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.io.ObjectInputStream;
@@ -21,13 +24,27 @@ public class ContiguousSystem extends FileSystem {
         int length = 0;
         boolean found = false;
 
-        for (FileEntry e : ft.table) {
+        // for (FileEntry e : ft.table) {
+        //     if (String.valueOf(e.name).equals(name)) {
+        //         found = true;
+        //         start = e.start;
+        //         length = e.length;
+        //         break;
+        //     }
+        // }
+
+        for (int i = 0; i < ft.table.length; i++) {
+            if (ft.table[i] == null) {
+                break;
+            }
+            FileEntry e = ft.table[i];
             if (String.valueOf(e.name).equals(name)) {
                 found = true;
                 start = e.start;
                 length = e.length;
+                break;
             }
-        }
+        } 
 
         if (!found) {
             System.out.println("File not found.");
@@ -68,7 +85,7 @@ public class ContiguousSystem extends FileSystem {
         }
     }
 
-    public void storeFile(Path path, String filename) throws Exception {
+    public int diskToSim(Path path, String filename) throws Exception {
         byte[] data = Files.readAllBytes(path);
         if (data.length >= 512) {
             System.out.println("TODO");
@@ -86,7 +103,7 @@ public class ContiguousSystem extends FileSystem {
 
             if (where == 0) {
                 System.out.println("No space found on disk.");
-                return;
+                return 1;
             }
             
             // System.out.println(data.length);
@@ -107,7 +124,7 @@ public class ContiguousSystem extends FileSystem {
 
             if (!ftSpace) {
                 System.out.println("No space found in filetable.");
-                return;
+                return 1;
             }
             
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -117,5 +134,113 @@ public class ContiguousSystem extends FileSystem {
             ftBytes = bos.toByteArray();
             this.memory.write(0, ftBytes);
         }
+        return 0;
+    }
+
+    public int simToDisk(Path path, String filename) throws Exception {
+        byte[] ftBytes = this.memory.read(0);
+        ByteArrayInputStream in = new ByteArrayInputStream(ftBytes);
+        ObjectInputStream is = new ObjectInputStream(in);
+        FileTable ft = (FileTable)is.readObject();
+
+        int start = 0;
+        int length = 0;
+        boolean found = false;
+
+        // for (FileEntry e : ft.table) {
+        //     if (String.valueOf(e.name).equals(name)) {
+        //         found = true;
+        //         start = e.start;
+        //         length = e.length;
+        //         break;
+        //     }
+        // }
+
+        for (int i = 0; i < ft.table.length; i++) {
+            if (ft.table[i] == null) {
+                break;
+            }
+            FileEntry e = ft.table[i];
+            if (String.valueOf(e.name).equals(filename)) {
+                found = true;
+                start = e.start;
+                length = e.length;
+                break;
+            }
+        } 
+
+        if (!found) {
+            System.out.println("File not found.");
+            return 1;
+        }
+
+        File outputFile = path.toFile();
+        OutputStream fileOut = new FileOutputStream(outputFile);
+
+        if (length > 1) {
+            System.out.println("TODO");
+        } else {
+            byte[] data = this.memory.read(start);
+            fileOut.write(data);
+        }
+
+        fileOut.close();
+        return 0;
+    }
+
+    public int deleteFile(String filename) throws Exception {
+        byte[] ftBytes = this.memory.read(0);
+        ByteArrayInputStream in = new ByteArrayInputStream(ftBytes);
+        ObjectInputStream is = new ObjectInputStream(in);
+        FileTable ft = (FileTable)is.readObject();
+
+        // for (FileEntry e : ft.table) {
+        //     if (String.valueOf(e.name).equals(name)) {
+        //         found = true;
+        //         start = e.start;
+        //         length = e.length;
+        //         break;
+        //     }
+        // }
+
+        int start = 0;
+        int length = 0;
+        boolean found = false;
+
+        for (int i = 0; i < ft.table.length; i++) {
+            if (ft.table[i] == null) {
+                break;
+            }
+            FileEntry e = ft.table[i];
+            if (String.valueOf(e.name).equals(filename)) {
+                found = true;
+                start = e.start;
+                length = e.length;
+                ft.table[i] = null;
+                break;
+            }
+        } 
+
+        if (!found) {
+            System.out.println("File not found.");
+            return 1;
+        }
+
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        ObjectOutputStream oos = new ObjectOutputStream(bos);
+        oos.writeObject(ft);
+        oos.flush();
+        ftBytes = bos.toByteArray();
+        this.memory.write(0, ftBytes);
+
+        byte[] bitmap = this.memory.read(1);
+
+        for (int i = start; i < start + length; i++) {
+            bitmap[i] = 0;
+        }
+
+        this.memory.write(1, bitmap);
+
+        return 0;
     }
 }

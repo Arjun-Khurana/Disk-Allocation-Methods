@@ -33,11 +33,17 @@ public class UserInterface {
 
             System.out.println("Choice: " + input);
 
+            String inputString = "";
+            String filename = "";
+            Path path = null;
+            int result;
+
             switch (input) {
                 case 1:
                     System.out.print("Display which file? ");
-                    String choice = in.nextLine();
+                    String choice = in.next();
                     filesystem.displayFile(choice);
+                    System.out.println("");
                     break;
 
                 case 2:
@@ -55,18 +61,36 @@ public class UserInterface {
                     break;
 
                 case 5:
+                    System.out.print("Copy from: ");
+                    filename = in.next();
+                    System.out.print("Copy to: ");
+                    inputString = in.next();
+                    path = Paths.get(inputString);
+                    if (filesystem.simToDisk(path, filename) == 0) {
+                        System.out.println("Successfully copied to " + inputString);
+                    };
+                    System.out.println("");
                     break;
                 
                 case 6:
                     System.out.print("Copy from: ");
-                    String inputString = in.next();
+                    inputString = in.next();
                     System.out.print("Copy to: ");
-                    String filename = in.next();
-                    Path path = Paths.get(inputString);
-                    filesystem.storeFile(path, filename);
+                    filename = in.next();
+                    path = Paths.get(inputString);
+                    if (filesystem.diskToSim(path, filename) == 0) {
+                        System.out.println("Successfully copied to " + filename);
+                    }
+                    System.out.println("");
                     break;
 
                 case 7:
+                    System.out.print("Delete which file? ");
+                    filename = in.next();
+                    if (filesystem.deleteFile(filename) == 0) {
+                        System.out.println("Successfully deleted " + filename);
+                    }
+                    System.out.println("");
                     break;
 
                 case 8:
