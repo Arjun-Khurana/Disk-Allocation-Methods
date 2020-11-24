@@ -23,20 +23,17 @@ public class ChainedSystem extends FileSystem {
         return res;
     }
 
+    @Override
     public int diskToSim(Path path, String filename) throws Exception {
         byte[] data = Files.readAllBytes(path);
-        if (data.length >= 511) {
+        if (data.length > 511) {
             int blockLength = 511;
             int leftover = data.length % blockLength;
 
             int numBlocks = data.length/blockLength + (leftover > 0 ? 1 : 0);
-            byte[][] blockData  = new byte[numBlocks][blockLength];
-            for (int i = 0; i < (leftover > 0 ? numBlocks - 1 : numBlocks); i++) {
-                blockData[i] = Arrays.copyOfRange(data, i*blockLength, i*blockLength + blockLength);
-            }
-            if (leftover > 0) {
-                blockData[numBlocks - 1] = Arrays.copyOfRange(data, (numBlocks-1)*blockLength, (numBlocks-1)*blockLength + leftover); 
-            }
+            
+            byte[][] blockData  = subdivideData(blockLength, data);
+            
 
             byte[][] dataToPlace = new byte[numBlocks][512];
             byte[] whereToPlace = new byte[numBlocks+1];
@@ -55,7 +52,7 @@ public class ChainedSystem extends FileSystem {
 
             for (int i = 0; i < numBlocks; i++) {
                 if (whereToPlace[i] == 0) {
-                    System.out.println("No space found on disk.");
+                    System.out.println("Not enough space found on disk.");
                     return 1;
                 }
             }
@@ -85,7 +82,7 @@ public class ChainedSystem extends FileSystem {
             }
 
             if (where == 0) {
-                System.out.println("No space found on disk.");
+                System.out.println("Not enough space found on disk.");
                 return 1;
             }
 
@@ -96,6 +93,7 @@ public class ChainedSystem extends FileSystem {
         return 0;
     }
 
+    @Override
     public void displayFile(String name) throws Exception {
         byte[] data = this.memory.read(0);
         ByteArrayInputStream in = new ByteArrayInputStream(data);
@@ -107,7 +105,7 @@ public class ChainedSystem extends FileSystem {
 
         for (int i = 0; i < ft.table.length; i++) {
             if (ft.table[i] == null) {
-                break;
+                continue;
             }
             FileEntry e = ft.table[i];
             if (String.valueOf(e.name).equals(name)) {
@@ -135,6 +133,7 @@ public class ChainedSystem extends FileSystem {
         }
     }
 
+    @Override
     public void printFileTable() throws Exception {
         byte[] ftBytes = this.memory.read(0);
         ByteArrayInputStream in = new ByteArrayInputStream(ftBytes);
@@ -151,6 +150,7 @@ public class ChainedSystem extends FileSystem {
         }
     }
 
+    @Override
     public int simToDisk(Path path, String filename) throws Exception {
         byte[] ftBytes = this.memory.read(0);
         ByteArrayInputStream in = new ByteArrayInputStream(ftBytes);
@@ -162,7 +162,7 @@ public class ChainedSystem extends FileSystem {
 
         for (int i = 0; i < ft.table.length; i++) {
             if (ft.table[i] == null) {
-                break;
+                continue;
             }
             FileEntry e = ft.table[i];
             if (String.valueOf(e.name).equals(filename)) {
@@ -196,6 +196,7 @@ public class ChainedSystem extends FileSystem {
         return 0;
     }
 
+    @Override
     public int deleteFile(String filename) throws Exception {
         byte[] ftBytes = this.memory.read(0);
         ByteArrayInputStream in = new ByteArrayInputStream(ftBytes);

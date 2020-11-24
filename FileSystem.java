@@ -1,7 +1,13 @@
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.ObjectInputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.ByteArrayInputStream;
 import java.io.ObjectOutputStream;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Arrays;
+import java.io.ObjectInputStream;
 
 public class FileSystem {
 
@@ -67,4 +73,29 @@ public class FileSystem {
         this.memory.write(0, ftBytes);
         return 0;
     }
+
+    protected byte[][] subdivideData(int blockLength, byte[] data) {
+        int leftover = data.length % blockLength;
+
+        int numBlocks = data.length/blockLength + (leftover > 0 ? 1 : 0);
+        byte[][] blockData  = new byte[numBlocks][blockLength];
+        for (int i = 0; i < (leftover > 0 ? numBlocks - 1 : numBlocks); i++) {
+            blockData[i] = Arrays.copyOfRange(data, i*blockLength, i*blockLength + blockLength);
+        }
+        if (leftover > 0) {
+            blockData[numBlocks - 1] = Arrays.copyOfRange(data, (numBlocks-1)*blockLength, (numBlocks-1)*blockLength + leftover); 
+        }
+        return blockData;
+    }
+
+    public int diskToSim(Path path, String filename) throws Exception {
+        System.out.println("Unimplemented");
+        return 0;
+    }
+    public void printFileTable() throws Exception {
+        System.out.println("Unummplemented");
+    }
+    public int simToDisk(Path path, String filename) throws Exception {return 0;}
+    public void displayFile(String name) throws Exception {}
+    public int deleteFile(String filename) throws Exception {return 0;}
 }

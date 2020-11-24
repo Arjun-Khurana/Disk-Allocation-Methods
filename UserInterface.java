@@ -4,8 +4,32 @@ import java.util.Scanner;
 
 public class UserInterface {
     public static void main(String[] args) throws Exception {
+
+        if (args.length != 1) {
+            System.out.println("Expected one argument.");
+            return;
+        }
+
         DiskDrive drive = new DiskDrive();
-        ChainedSystem filesystem = new ChainedSystem(drive);
+        FileSystem filesystem;
+
+        switch(args[0]) {
+            case "contiguous":
+                filesystem = new ContiguousSystem(drive);
+                break;
+            
+            case "chained":
+                filesystem = new ChainedSystem(drive);
+                break;
+
+            case "indexed":
+                filesystem = new IndexedSystem(drive);
+                break;
+
+            default:
+                System.out.println("Invalid argument.");
+                return;
+        }
 
         Scanner in = new Scanner(System.in);
         
