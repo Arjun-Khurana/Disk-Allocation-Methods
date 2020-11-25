@@ -86,6 +86,11 @@ public class ChainedSystem extends FileSystem {
     public void printFileTable() throws Exception {
         // Get the filetable
         FileTable ft = getFileTable();
+        System.out.println(
+            "File" + "\t" +
+            "Start" + "\t" +
+            "Length"
+        );
 
         // Iterate over the table and print the non-null elements
         for (int i = 0; i < ft.table.length; i++) {
@@ -93,10 +98,11 @@ public class ChainedSystem extends FileSystem {
                 continue;
             }
 
-            // Print the name of the file and the starting block
+            // Print the name of the file, the starting block, and the length
             System.out.println(
                 String.valueOf(ft.table[i].name) + "\t" + 
-                (int)ft.table[i].start
+                (int)ft.table[i].start + "\t" + 
+                (int)ft.table[i].length
             );
         }
     }
@@ -162,7 +168,7 @@ public class ChainedSystem extends FileSystem {
             whereToPlace[numBlocks] = 0;
 
             // If there is no room in the filetable, return with an error
-            if (this.addToFileTable(filename, whereToPlace[0], (byte)0) != 0) {
+            if (this.addToFileTable(filename, whereToPlace[0], (byte)numBlocks) != 0) {
                 return 1;
             }
 
@@ -189,7 +195,7 @@ public class ChainedSystem extends FileSystem {
                     where = i;
 
                     //First, if there is no space in the filetable, return with an error
-                    if (this.addToFileTable(filename, (byte)where, (byte)0) != 0) {
+                    if (this.addToFileTable(filename, (byte)where, (byte)1) != 0) {
                         return 1;
                     }
 
