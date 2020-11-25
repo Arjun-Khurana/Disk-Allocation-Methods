@@ -114,79 +114,49 @@ public class ContiguousSystem extends FileSystem {
         // Read the bitmap into local variable
         byte[] bitmap = this.memory.read(1);
 
-        // If the data in the file are longer than 512 bytes
-        if (data.length > 512) {
-            // Subdivide the data into blocks of length 512
-            byte[][] blockData = subdivideData(512, data);
-            int numBlocks = blockData.length;
+        // Subdivide the data into blocks of length 512
+        byte[][] blockData = subdivideData(512, data);
+        int numBlocks = blockData.length;
 
-            int where = 0;
+        int where = 0;
 
-            // Try to find space by iterating over the bitmap to find a 
-            // contiguous stretch which fits the file
-            for (int i = 0; i < bitmap.length; i++) {
-                // When we find an open block, iterate until the number of
-                // blocks to make sure the whole file can fit
-                if (bitmap[i] == 0) {
-                    boolean foundSpace = true;
-                    for (int j = i; j < i + numBlocks; j++) {
-                        if (j >= bitmap.length || bitmap[j] == 1) {
-                            foundSpace = false;
-                            break;
-                        }
-                    }
-
-                    // If there is enough space, keep where the space starts
-                    if (foundSpace) {
-                        where = i;
+        // Try to find space by iterating over the bitmap to find a 
+        // contiguous stretch which fits the file
+        for (int i = 0; i < bitmap.length; i++) {
+            // When we find an open block, iterate until the number of
+            // blocks to make sure the whole file can fit
+            if (bitmap[i] == 0) {
+                boolean foundSpace = true;
+                for (int j = i; j < i + numBlocks; j++) {
+                    if (j >= bitmap.length || bitmap[j] == 1) {
+                        foundSpace = false;
                         break;
                     }
                 }
-            }
 
-            // If not enough space, return with an error
-            if (where == 0) {
-                System.out.println("Not enough space found on disk.");
-                return 1;
-            }
-
-            // If there is not enough space in the filetable, return with an error
-            if (this.addToFileTable(filename, (byte)where, (byte)numBlocks) != 0) {
-                return 1;
-            }
-
-            // Finally, write each block of the file to memory starting with the first
-            // block and continuing sequentially
-            for (int i = where, j = 0; i < where + numBlocks; i++, j++) {
-                this.memory.write(i, blockData[j]);
-            }
-
-        } else { // if the file is one block or less long,
-            // find the next open blockk
-            int where = 0;
-            
-            for (int i = 0; i < bitmap.length; i++) {
-                // When we find an open block, write the file to memory
-                if (bitmap[i] == 0) {
+                // If there is enough space, keep where the space starts
+                if (foundSpace) {
                     where = i;
-
-                    // If there is no space in the file table, return with an error
-                    if (this.addToFileTable(filename, (byte)where, (byte)1) != 0) {
-                        return 1;
-                    }
-
-                    // Else, write the file to memory and break
-                    this.memory.write(i, data);
                     break;
                 }
             }
+        }
 
-            // If the file was not written, return with an error
-            if (where == 0) {
-                System.out.println("Not enough space found on disk.");
-                return 1;
-            }
+        // If not enough space, return with an error
+        if (where == 0) {
+            System.out.println("Not enough space found on disk.");
+            return 1;
+        }
 
+        // If there is not enough space in the filetable, return with an error
+        if (this.addToFileTable(filename, (byte)where, (byte)numBlocks) != 0) {
+            return 1;
+        }
+
+        // Finally, write each block of the file to memory starting with the first
+        // block and continuing sequentially
+        for (int i = where, j = 0; i < where + numBlocks; i++, j++) {
+            this.memory.write(i, blockData[j]);
         }
         return 0;
     }
