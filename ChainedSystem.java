@@ -123,95 +123,62 @@ public class ChainedSystem extends FileSystem {
 
         // Here, the block size is only 511 bytes because we need one byte 
         // for the pointer to the next block
-        if (data.length > 511) {
-            int blockLength = 511;
-            int leftover = data.length % blockLength;
-            int numBlocks = data.length/blockLength + (leftover > 0 ? 1 : 0);
-            
-            // subdivide the file into blocks of length 511
-            byte[][] blockData  = subdivideData(blockLength, data);
-            
-            // initialize arrays for the data to write, and where to write it
-            byte[][] dataToPlace = new byte[numBlocks][512];
-            byte[] whereToPlace = new byte[numBlocks+1];
+        int blockLength = 511;
+        
+        // subdivide the file into blocks of length 511
+        byte[][] blockData  = subdivideData(blockLength, data);
+        
+        // initialize arrays for the data to write, and where to write it
+        byte[][] dataToPlace = new byte[blockData.length][512];
+        byte[] whereToPlace = new byte[blockData.length+1];
 
-            // read the bitmap
-            byte[] bitmap = this.memory.read(1);
+        // read the bitmap
+        byte[] bitmap = this.memory.read(1);
 
-            // For every block in the file, look for an open block in the
-            // bitmap to fit it
-            for (int i = 0; i < numBlocks; i++) {
-                for (int j = 0; j < bitmap.length; j++) {
-                    // when we find an open block, add the place where we
-                    // found it to the array of where to place
-                    if (bitmap[j] == 0) {
-                        whereToPlace[i] = (byte)j;
+        // For every block in the file, look for an open block in the
+        // bitmap to fit it
+        for (int i = 0; i < blockData.length; i++) {
+            for (int j = 0; j < bitmap.length; j++) {
+                // when we find an open block, add the place where we
+                // found it to the array of where to place
+                if (bitmap[j] == 0) {
+                    whereToPlace[i] = (byte)j;
 
-                        // update the bitmap so we don't choose this block again
-                        bitmap[j] = 1;
-                        this.memory.write(1, bitmap);
-                        break;
-                    }
-                }
-            }
-
-            // If any of the blocks don't have a place to go, return with an error
-            for (int i = 0; i < numBlocks; i++) {
-                if (whereToPlace[i] == 0) {
-                    System.out.println("Not enough space found on disk.");
-                    return 1;
-                }
-            }
-            
-            // make sure the last block has a 0 pointer
-            whereToPlace[numBlocks] = 0;
-
-            // If there is no room in the filetable, return with an error
-            if (this.addToFileTable(filename, whereToPlace[0], (byte)numBlocks) != 0) {
-                return 1;
-            }
-
-            // for each block, write it to memory in the location specified by the
-            // whereToPlace array
-            for (int i = 0; i < numBlocks; i++) {
-                byte[] location = {whereToPlace[i+1]};
-                
-                // combine the pointer to the next block with this array
-                // and write it to the disk
-                dataToPlace[i] = combineArrays(location, blockData[i]);
-                this.memory.write(whereToPlace[i], dataToPlace[i]);
-            }
-
-        } else { // if the file is one block or less long
-            // find one block to place the file in
-            int where = 0;
-
-            byte[] bitmap = this.memory.read(1);
-            for (int i = 0; i < bitmap.length; i++) {
-                // When we find an open block, 
-                if (bitmap[i] == 0) {
-                    byte[] location = {0};
-                    where = i;
-
-                    //First, if there is no space in the filetable, return with an error
-                    if (this.addToFileTable(filename, (byte)where, (byte)1) != 0) {
-                        return 1;
-                    }
-
-                    // Combine a 0 pointer with the file data to indicate
-                    // the file ends with this block
-                    this.memory.write(i, combineArrays(location, data));
-                    
+                    // update the bitmap so we don't choose this block again
+                    bitmap[j] = 1;
+                    this.memory.write(1, bitmap);
                     break;
                 }
             }
-            
-            // If there was no block found, return with an error
-            if (where == 0) {
+        }
+
+        // If any of the blocks don't have a place to go, return with an error
+        for (int i = 0; i < blockData.length; i++) {
+            if (whereToPlace[i] == 0) {
                 System.out.println("Not enough space found on disk.");
                 return 1;
             }
         }
+        
+        // make sure the last block has a 0 pointer
+        whereToPlace[blockData.length] = 0;
+
+        // If there is no room in the filetable, return with an error
+        if (this.addToFileTable(filename, whereToPlace[0], (byte)blockData.length) != 0) {
+            return 1;
+        }
+
+        // for each block, write it to memory in the location specified by the
+        // whereToPlace array
+        for (int i = 0; i < blockData.length; i++) {
+            byte[] location = {whereToPlace[i+1]};
+            
+            // combine the pointer to the next block with this array
+            // and write it to the disk
+            dataToPlace[i] = combineArrays(location, blockData[i]);
+            this.memory.write(whereToPlace[i], dataToPlace[i]);
+        }
+
         return 0;
     }
 
