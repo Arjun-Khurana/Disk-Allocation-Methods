@@ -3,7 +3,7 @@
     CS4348 Project 3
 
     ContiguousSystem class for project 3, which inherits from the 
-    generic FileSystem class, and overrides methods for the full 
+    generic FileSystem class, and overrides methods for the full functionality
     of the file system. Utilizes the contiguous allocation method,
     in which each file is stored sequentially in memory.
 */
@@ -75,6 +75,11 @@ public class ContiguousSystem extends FileSystem {
     public void printFileTable() throws Exception {
         // Get the filetable
         FileTable ft = getFileTable();
+        System.out.println(
+            "File" + "\t" +
+            "Start" + "\t" +
+            "Length"
+        );
 
         // Loop over the file table and print every non-null element
         for (int i = 0; i < ft.table.length; i++) {
