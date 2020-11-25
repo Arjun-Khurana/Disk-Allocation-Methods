@@ -8,11 +8,9 @@
     in which each file is stored sequentially in memory.
 */
 
-// Used for serializing and deserializing the file table
+// Used for serializing the file table
 import java.io.ByteArrayOutputStream;
-import java.io.ByteArrayInputStream;
 import java.io.ObjectOutputStream;
-import java.io.ObjectInputStream;
 
 // Used to read and write to and from the disk, and the println
 import java.io.File;
